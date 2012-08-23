@@ -8,7 +8,7 @@ module.exports = function (grunt) {
     grunt.initConfig({
         meta: {
             version: '0.1.0',
-            js: ['src/js/first.js', 'src/js/*.js', 'src/js/last.js']
+            js: ['src/js/*.js']
         },
         concat: {
             dist: {
