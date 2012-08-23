@@ -2,36 +2,53 @@
 module.exports = function (grunt) {
     'use strict';
     var zipstream = require('zipstream'),
+        cleanCSS = require('clean-css'),
         fs = require('fs');
 
     // Project configuration.
     grunt.initConfig({
         meta: {
             version: '0.1.0',
-            js: ['src/js/*.js']
+            js: ['src/js/*.js'],
+            css: ['src/css/*.css']
         },
         concat: {
-            dist: {
+            js: {
                 src: ['<config:meta.js>'],
-                dest: 'build/j.js'
+                dest: 'build/c.js'
+            },
+            css: {
+                src: ['<config:meta.css>'],
+                dest: 'build/c.css'
             }
         },
         min: {
-            dist: {
-                src: ['<config:concat.dist.dest>'],
+            js: {
+                src: ['<config:concat.js.dest>'],
                 dest: 'build/m.js'
             }
         },
+        mincss: {
+            src: ['<config:concat.css.dest>'],
+            dest: 'build/m.css'
+        },
         zip: {
-            src: ['<config:min.dist.dest>'],
+            src: ['<config:min.js.dest>', '<config:mincss.dest>'],
             dest: 'build/js13kgame.zip',
             map: {from: 'build/', to: ''},
             maxsize: 13312
         },
         watch: {
             files: '<config:meta.js>',
-            tasks: 'concat min zip'
+            tasks: 'concat min mincss zip'
         }
+    });
+
+    grunt.registerTask('mincss', 'Compresses css files', function () {
+        this.requiresConfig('mincss.src', 'mincss.dest');
+        var css = grunt.file.read(grunt.config('mincss.src'));
+        css = cleanCSS.process(css);
+        grunt.file.write(grunt.config('mincss.dest'), css);
     });
 
     grunt.registerTask('zip', 'Zip files.', function () {
@@ -89,6 +106,6 @@ module.exports = function (grunt) {
     });
 
     // Default task.
-    grunt.registerTask('default', 'concat min zip');
+    grunt.registerTask('default', 'concat min mincss zip');
 
 };
