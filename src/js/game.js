@@ -18,6 +18,7 @@
         ship_y,
         ship_velocity_x = 0,
         ship_velocity_y = 0,
+        turret_angle = 0,
         mouse_x = 0,
         mouse_y = 0,
         keys = {};
@@ -92,6 +93,10 @@
         cam_x = ship_x + (mouse_x - canvas_center_x) / 2;
         cam_y = ship_y + (mouse_y - canvas_center_y) / 2;
 
+        // find turret angle Just uses cam position.
+        turret_angle = Math.atan2(cam_y - ship_y, cam_x - ship_x);
+
+
         //start painting by removing
         paint.clearRect(0, 0, canvas_width, canvas_height);
         paint.save();
@@ -152,6 +157,14 @@
                 paint.fill();
             }
         });
+
+        // paint turret
+        paint.beginPath();
+        paint.fillStyle = "#00FFFF";
+        paint.rotate(turret_angle);
+        paint.arc(0, 0, 15, 0, pi2, false);
+        paint.rect(0, -5, 25, 10);
+        paint.fill();
 
         paint.restore();
 
