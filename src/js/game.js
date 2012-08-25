@@ -21,7 +21,9 @@
         turret_angle = 0,
         mouse_x = 0,
         mouse_y = 0,
-        keys = {};
+        keys = {},
+        shoots = [],
+        shoot_next_frame = false;
 
     function addEvent(target, event, callback) {
         target.addEventListener(event, callback, false);
@@ -39,6 +41,10 @@
     addEvent(window, 'mousemove', function (event) {
         mouse_x = event.pageX;
         mouse_y = event.pageY;
+    });
+
+    addEvent(window, 'click', function (event) {
+        shoot_next_frame = true;
     });
 
     addEvent(window, 'keydown', function (event) {
@@ -86,6 +92,20 @@
             ship_y = Math.max(Math.min(ship_y, 2969), 31);
         }
 
+        // Create shoot.
+        if (shoot_next_frame) {
+            shoot_next_frame = false;
+            shoots.push({
+                x: ship_x,
+                y: ship_y,
+                vx: ship_velocity_x + Math.cos(turret_angle) * 10,
+                vy: ship_velocity_y + Math.sin(turret_angle) * 10
+            });
+            ship_velocity_x -= Math.cos(turret_angle) * 0.1;
+            ship_velocity_y -= Math.sin(turret_angle) * 0.1;
+        }
+
+
         ship_x += ship_velocity_x;
         ship_y += ship_velocity_y;
 
@@ -96,6 +116,15 @@
         // find turret angle Just uses cam position.
         turret_angle = Math.atan2(cam_y - ship_y, cam_x - ship_x);
 
+        // advance shots
+        shoots = shoots.filter(function (shoot) {
+            if (shoot.x < -5 || shoot.x > 3005 || shoot.y < -5 || shoot.y > 3005) {
+                return false;
+            }
+            shoot.x += shoot.vx;
+            shoot.y += shoot.vy;
+            return true;
+        });
 
         //start painting by removing
         paint.clearRect(0, 0, canvas_width, canvas_height);
@@ -126,13 +155,23 @@
         paint.strokeStyle = "#FF0000";
         paint.strokeRect(0, 0, 3000, 3000);
 
+        //paint shots
+        paint.lineWidth = 0;
+        paint.fillStyle = "#FFFFFF";
+
+        paint.beginPath();
+        shoots.forEach(function (shot) {
+            paint.arc(shot.x, shot.y, 5, 0, pi2, false);
+        });
+        paint.fill();
+
+
 
 
         // painting ship;
 
         paint.save();
         paint.translate(ship_x, ship_y);
-        paint.lineWidth = 0;
         paint.fillStyle = "#FF0000";
 
         paint.beginPath();
