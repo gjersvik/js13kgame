@@ -23,7 +23,8 @@
         mouse_y = 0,
         keys = {},
         shoots = [],
-        shoot_next_frame = false;
+        shooting = false,
+        frame_count = 0;
 
     function addEvent(target, event, callback) {
         target.addEventListener(event, callback, false);
@@ -43,8 +44,12 @@
         mouse_y = event.pageY;
     });
 
-    addEvent(window, 'click', function (event) {
-        shoot_next_frame = true;
+    addEvent(window, 'mousedown', function (event) {
+        shooting = true;
+    });
+
+    addEvent(window, 'mouseup', function (event) {
+        shooting = false;
     });
 
     addEvent(window, 'keydown', function (event) {
@@ -64,6 +69,8 @@
 
     ship_x = ship_y = 1500;
     function loop() {
+        frame_count += 1;
+
         // move ship
         // test for W key.
         if (keys[87]) {
@@ -93,16 +100,15 @@
         }
 
         // Create shoot.
-        if (shoot_next_frame) {
-            shoot_next_frame = false;
+        if (shooting && frame_count % 10 === 0) {
             shoots.push({
                 x: ship_x,
                 y: ship_y,
                 vx: ship_velocity_x + Math.cos(turret_angle) * 10,
                 vy: ship_velocity_y + Math.sin(turret_angle) * 10
             });
-            ship_velocity_x -= Math.cos(turret_angle) * 0.1;
-            ship_velocity_y -= Math.sin(turret_angle) * 0.1;
+            ship_velocity_x -= Math.cos(turret_angle) * 0.2;
+            ship_velocity_y -= Math.sin(turret_angle) * 0.2;
         }
 
 
@@ -161,12 +167,10 @@
 
         paint.beginPath();
         shoots.forEach(function (shot) {
+            paint.moveTo(shot.x, shot.y);
             paint.arc(shot.x, shot.y, 5, 0, pi2, false);
         });
         paint.fill();
-
-
-
 
         // painting ship;
 
