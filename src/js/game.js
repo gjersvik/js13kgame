@@ -12,13 +12,20 @@
         body = document.body,
         paint = canvas.getContext('2d'),
         animation = window.requestAnimationFrame,
+        grid = {
+            h: 3000,
+            w: 3000
+        },
         cam_x,
         cam_y,
-        ship_x,
-        ship_y,
-        ship_velocity_x = 0,
-        ship_velocity_y = 0,
-        turret_angle = 0,
+        ship = {
+            x: 1500,
+            y: 1500,
+            vx: 0,
+            vy: 0,
+            angle: 0,
+            radius: 30
+        },
         mouse_x = 0,
         mouse_y = 0,
         keys = {},
@@ -36,6 +43,18 @@
         canvas_center_y = canvas_height / 2;
         canvas_center_x = canvas_width / 2;
     }
+
+    function gridBounce(sprite) {
+        if (sprite.x < sprite.radius || sprite.x > grid.w - sprite.radius) {
+            sprite.vx /= -2;
+            sprite.x = Math.max(Math.min(sprite.x, grid.w - sprite.radius - 1), sprite.radius + 1);
+        }
+        if (sprite.y < sprite.radius || sprite.y > grid.h - sprite.radius) {
+            sprite.vy /= -2;
+            sprite.y = Math.max(Math.min(sprite.y, grid.h - sprite.radius - 1), sprite.radius + 1);
+        }
+    }
+
     addEvent(window, 'resize', resizeCanvas);
     resizeCanvas();
 
@@ -67,69 +86,63 @@
 //        setTimeout(16, callback);
 //    };
 
-    ship_x = ship_y = 1500;
     function loop() {
         frame_count += 1;
 
         // move ship
         // test for W key.
         if (keys[87]) {
-            ship_velocity_y -= 0.2;
+            ship.vy -= 0.2;
         }
         // test for S key.
         if (keys[83]) {
-            ship_velocity_y += 0.2;
+            ship.vy += 0.2;
         }
         // test for A key.
         if (keys[65]) {
-            ship_velocity_x -= 0.2;
+            ship.vx -= 0.2;
         }
         // test for D key.
         if (keys[68]) {
-            ship_velocity_x += 0.2;
+            ship.vx  += 0.2;
         }
 
         // test if ship is out of bound
-        if (ship_x < 30 || ship_x > 2970) {
-            ship_velocity_x /= -2;
-            ship_x = Math.max(Math.min(ship_x, 2969), 31);
-        }
-        if (ship_y < 30 || ship_y > 2970) {
-            ship_velocity_y /= -2;
-            ship_y = Math.max(Math.min(ship_y, 2969), 31);
-        }
+        gridBounce(ship);
 
         // Create shoot.
         if (shooting && frame_count % 10 === 0) {
             shoots.push({
-                x: ship_x,
-                y: ship_y,
-                vx: ship_velocity_x + Math.cos(turret_angle) * 10,
-                vy: ship_velocity_y + Math.sin(turret_angle) * 10
+                x: ship.x,
+                y: ship.y,
+                vx: ship.vx + Math.cos(ship.angle) * 10,
+                vy: ship.vy + Math.sin(ship.angle) * 10,
+                radius: 5
             });
-            ship_velocity_x -= Math.cos(turret_angle) * 0.2;
-            ship_velocity_y -= Math.sin(turret_angle) * 0.2;
+            ship.vx -= Math.cos(ship.angle) * 0.2;
+            ship.vy -= Math.sin(ship.angle) * 0.2;
+
+            if (shoots.length > 10) {
+                shoots.shift();
+            }
         }
 
 
-        ship_x += ship_velocity_x;
-        ship_y += ship_velocity_y;
+        ship.x += ship.vx;
+        ship.y += ship.vy;
 
         //using mouse position to calculate cam position relative to ship.
-        cam_x = ship_x + (mouse_x - canvas_center_x) / 2;
-        cam_y = ship_y + (mouse_y - canvas_center_y) / 2;
+        cam_x = ship.x + (mouse_x - canvas_center_x) / 2;
+        cam_y = ship.y + (mouse_y - canvas_center_y) / 2;
 
         // find turret angle Just uses cam position.
-        turret_angle = Math.atan2(cam_y - ship_y, cam_x - ship_x);
+        ship.angle = Math.atan2(cam_y - ship.y, cam_x - ship.x);
 
         // advance shots
-        shoots = shoots.filter(function (shoot) {
-            if (shoot.x < -5 || shoot.x > 3005 || shoot.y < -5 || shoot.y > 3005) {
-                return false;
-            }
+        shoots.forEach(function (shoot) {
             shoot.x += shoot.vx;
             shoot.y += shoot.vy;
-            return true;
+            gridBounce(shoot);
         });
 
         //start painting by removing
@@ -166,16 +179,16 @@
         paint.fillStyle = "#FFFFFF";
 
         paint.beginPath();
-        shoots.forEach(function (shot) {
-            paint.moveTo(shot.x, shot.y);
-            paint.arc(shot.x, shot.y, 5, 0, pi2, false);
+        shoots.forEach(function (shoot) {
+            paint.moveTo(shoot.x, shoot.y);
+            paint.arc(shoot.x, shoot.y, shoot.radius, 0, pi2, false);
         });
         paint.fill();
 
         // painting ship;
 
         paint.save();
-        paint.translate(ship_x, ship_y);
+        paint.translate(ship.x, ship.y);
         paint.fillStyle = "#FF0000";
 
         paint.beginPath();
@@ -204,7 +217,7 @@
         // paint turret
         paint.beginPath();
         paint.fillStyle = "#00FFFF";
-        paint.rotate(turret_angle);
+        paint.rotate(ship.angle);
         paint.arc(0, 0, 15, 0, pi2, false);
         paint.rect(0, -5, 25, 10);
         paint.fill();
