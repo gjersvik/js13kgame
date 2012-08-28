@@ -30,6 +30,7 @@
         mouse_y = 0,
         keys = {},
         shoots = [],
+        enemies = [],
         shooting = false,
         frame_count = 0;
 
@@ -53,6 +54,91 @@
             sprite.vy /= -2;
             sprite.y = Math.max(Math.min(sprite.y, grid.h - sprite.radius - 1), sprite.radius + 1);
         }
+    }
+    /* DNA:
+        0: size
+            3: hp
+            4: regen
+            5: armor
+        1: speed
+            6: axsel
+            7: topspeed
+            8: turnrate
+        2: atack
+            9: homing
+            10: spreed
+            11: bullet speed
+            12: damage
+                13: dps
+                14: firerate
+                15: number of shoots
+     */
+
+    function enemy(power_points, dna) {
+        // if enemy have no dna generate a random mutant
+        if (!dna) {
+            dna = [];
+            while (dna.length < 16) {
+                dna.push(Math.random());
+            }
+        }
+
+        var self = {
+            dna: dna,
+            weightedDna: [],
+            powerPoints: power_points,
+            x: grid.w * Math.random(),
+            y: grid.h * Math.random(),
+            vx: 0,
+            vy: 0,
+            angle: 0,
+            radius: 30
+        };
+
+        function weight(array, base) {
+            var sum = array.reduce(function (a, b) {
+                return a + b;
+            });
+            return array.map(function (item) {
+                return item / sum * base;
+            });
+        }
+
+        self.weightedDna = weight(dna.slice(0, 2), 1);
+        self.weightedDna = self.weightedDna.concat(weight(dna.slice(3, 5), self.weightedDna[0]));
+        self.weightedDna = self.weightedDna.concat(weight(dna.slice(6, 8), self.weightedDna[1]));
+        self.weightedDna = self.weightedDna.concat(weight(dna.slice(9, 12), self.weightedDna[3]));
+        self.weightedDna = self.weightedDna.concat(weight(dna.slice(13, 15), self.weightedDna[12]));
+
+        self.radius = 10 + 100 * self.weightedDna[0];
+
+        self.advance = function () {
+            gridBounce(self);
+        };
+
+        self.paint = function () {
+            paint.save();
+            paint.translate(self.x, self.y);
+            paint.fillStyle = "#FF0000";
+
+            paint.beginPath();
+            paint.moveTo(self.radius * 2 / 3, 0);
+            paint.arc(0, 0, self.radius, 0.1, half_pi - 0.1, false);
+            paint.lineTo(0, self.radius * 2 / 3);
+            paint.arc(0, 0, self.radius, half_pi + 0.1, pi - 0.1, false);
+            paint.lineTo(self.radius * -2 / 3, 0);
+            paint.arc(0, 0, self.radius, pi + 0.1, pi + half_pi - 0.1, false);
+            paint.lineTo(0, self.radius * -2 / 3);
+            paint.arc(0, 0, self.radius, pi + half_pi + 0.1, pi2 - 0.1, false);
+            paint.fill();
+            paint.restore();
+        };
+
+        return self;
+    }
+
+    while (enemies.length < 16) {
+        enemies.push(enemy());
     }
 
     addEvent(window, 'resize', resizeCanvas);
@@ -145,6 +231,11 @@
             gridBounce(shoot);
         });
 
+        // advance enemies
+        enemies.forEach(function (enemy) {
+            enemy.advance();
+        });
+
         //start painting by removing
         paint.clearRect(0, 0, canvas_width, canvas_height);
         paint.save();
@@ -185,11 +276,16 @@
         });
         paint.fill();
 
+        // paint enemies
+        enemies.forEach(function (enemy) {
+            enemy.paint();
+        });
+
         // painting ship;
 
         paint.save();
         paint.translate(ship.x, ship.y);
-        paint.fillStyle = "#FF0000";
+        paint.fillStyle = "#0000FF";
 
         paint.beginPath();
         paint.moveTo(20, 0);
