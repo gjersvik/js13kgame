@@ -51,4 +51,4 @@ game.spriteList = function () {
         });
     };
     return self;
-}
+};

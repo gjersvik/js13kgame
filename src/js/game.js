@@ -1,6 +1,6 @@
 /*jslint browser:true */
 /*global game */
-(function (window, document ,game) {
+(function (window, document, game) {
     'use strict';
     var pi = Math.PI,
         pi2 = pi * 2,
