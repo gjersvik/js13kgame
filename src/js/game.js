@@ -1,5 +1,6 @@
 /*jslint browser:true */
-(function (window, document) {
+/*global game */
+(function (window, document ,game) {
     'use strict';
     var pi = Math.PI,
         pi2 = pi * 2,
@@ -29,8 +30,8 @@
         mouse_x = 0,
         mouse_y = 0,
         keys = {},
-        shoots = [],
-        enemies = [],
+        player_shoots = game.spriteList(),
+        enemies = game.spriteList(),
         shooting = false,
         frame_count = 0;
 
@@ -131,6 +132,10 @@
         topSpeed = 30 * self.weightedDna[7];
         engineSampleRate = Math.ceil(120 * (1 - self.weightedDna[8]));
 
+        self.hit = function (damage) {
+            self.deleteMe = true;
+        };
+
         self.advance = function () {
             if (frame_count % engineSampleRate === 0) {
                 engines = engines.map(function () {
@@ -196,9 +201,13 @@
         return self;
     }
 
-    while (enemies.length < 50) {
-        enemies.push(enemy());
-    }
+    (function () {
+        var i = 0;
+        while (i < 50) {
+            i += 1;
+            enemies.add(enemy());
+        }
+    }());
 
     addEvent(window, 'resize', resizeCanvas);
     resizeCanvas();
@@ -234,6 +243,10 @@
     function loop() {
         frame_count += 1;
 
+        // clean lists
+        enemies.clean();
+        player_shoots.clean();
+
         // move ship
         // test for W key.
         if (keys[87]) {
@@ -257,7 +270,7 @@
 
         // Create shoot.
         if (shooting && frame_count % 10 === 0) {
-            shoots.push({
+            player_shoots.add({
                 x: ship.x,
                 y: ship.y,
                 vx: ship.vx + Math.cos(ship.angle) * 10,
@@ -266,10 +279,6 @@
             });
             ship.vx -= Math.cos(ship.angle) * 0.2;
             ship.vy -= Math.sin(ship.angle) * 0.2;
-
-            if (shoots.length > 10) {
-                shoots.shift();
-            }
         }
 
 
@@ -284,7 +293,7 @@
         ship.angle = Math.atan2(cam_y - ship.y, cam_x - ship.x);
 
         // advance shots
-        shoots.forEach(function (shoot) {
+        player_shoots.forEach(function (shoot) {
             shoot.x += shoot.vx;
             shoot.y += shoot.vy;
             gridBounce(shoot);
@@ -292,7 +301,13 @@
 
         // advance enemies
         enemies.forEach(function (enemy) {
-            enemy.advance();
+            enemy.advance(frame_count);
+        });
+
+        //collision detection
+        player_shoots.collisionDetection(enemies, function (shoot, enemy) {
+            enemy.hit();
+            shoot.deleteMe = true;
         });
 
         //start painting by removing
@@ -329,7 +344,7 @@
         paint.fillStyle = "#FFFFFF";
 
         paint.beginPath();
-        shoots.forEach(function (shoot) {
+        player_shoots.forEach(function (shoot) {
             paint.moveTo(shoot.x, shoot.y);
             paint.arc(shoot.x, shoot.y, shoot.radius, 0, pi2, false);
         });
@@ -385,4 +400,4 @@
     }
     animation(loop);
 
-}(window, document));
+}(window, document, game));

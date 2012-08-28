@@ -10,7 +10,7 @@ module.exports = function (grunt) {
     grunt.initConfig({
         meta: {
             version: '0.1.0',
-            js: ['src/js/*.js'],
+            js: ['src/js/namespace.js', 'src/js/spritelist.js', 'src/js/game.js'],
             css: ['src/css/*.css'],
             index: 'src/index.html'
         },
