@@ -34,6 +34,16 @@
         shooting = false,
         frame_count = 0;
 
+    function containNumber(number, from, to){
+        if (number < from) {
+            return from;
+        }
+        if (number > to) {
+            return to;
+        }
+        return number;
+    }
+
     function addEvent(target, event, callback) {
         target.addEventListener(event, callback, false);
     }
@@ -48,11 +58,11 @@
     function gridBounce(sprite) {
         if (sprite.x < sprite.radius || sprite.x > grid.w - sprite.radius) {
             sprite.vx /= -2;
-            sprite.x = Math.max(Math.min(sprite.x, grid.w - sprite.radius - 1), sprite.radius + 1);
+            sprite.x = containNumber(sprite.x, sprite.radius + 1, grid.w - sprite.radius - 1);
         }
         if (sprite.y < sprite.radius || sprite.y > grid.h - sprite.radius) {
             sprite.vy /= -2;
-            sprite.y = Math.max(Math.min(sprite.y, grid.h - sprite.radius - 1), sprite.radius + 1);
+            sprite.y = containNumber(sprite.y, sprite.radius + 1, grid.h - sprite.radius - 1);
         }
     }
     /* DNA:
@@ -63,7 +73,7 @@
         1: speed
             6: axsel
             7: topspeed
-            8: turnrate
+            8: engine responce time
         2: atack
             9: homing
             10: spreed
@@ -72,28 +82,34 @@
                 13: dps
                 14: firerate
                 15: number of shoots
+        16: engine;
      */
 
     function enemy(power_points, dna) {
         // if enemy have no dna generate a random mutant
         if (!dna) {
             dna = [];
-            while (dna.length < 16) {
+            while (dna.length < 17) {
                 dna.push(Math.random());
             }
         }
 
         var self = {
-            dna: dna,
-            weightedDna: [],
-            powerPoints: power_points,
-            x: grid.w * Math.random(),
-            y: grid.h * Math.random(),
-            vx: 0,
-            vy: 0,
-            angle: 0,
-            radius: 30
-        };
+                dna: dna,
+                weightedDna: [],
+                powerPoints: power_points,
+                x: grid.w * Math.random(),
+                y: grid.h * Math.random(),
+                vx: 0,
+                vy: 0,
+                angle: 0,
+                radius: 30
+            },
+            acceleration,
+            topSpeed,
+            engineSampleRate,
+            engines = [false, false, false, false];
+
 
         function weight(array, base) {
             var sum = array.reduce(function (a, b) {
@@ -111,8 +127,38 @@
         self.weightedDna = self.weightedDna.concat(weight(dna.slice(13, 15), self.weightedDna[12]));
 
         self.radius = 10 + 100 * self.weightedDna[0];
+        acceleration = 0.5 * self.weightedDna[6];
+        topSpeed = 30 * self.weightedDna[7];
+        engineSampleRate = Math.ceil(120 * (1 - self.weightedDna[8]));
 
         self.advance = function () {
+            if (frame_count % engineSampleRate === 0) {
+                engines = engines.map(function () {
+                    return self.dna[16] / 4 >= Math.random();
+                });
+            }
+
+            if (engines[0]) {
+                self.vy -= 0.2;
+            }
+            // test for S key.
+            if (engines[2]) {
+                self.vy += 0.2;
+            }
+            // test for A key.
+            if (engines[3]) {
+                self.vx -= 0.2;
+            }
+            // test for D key.
+            if (engines[1]) {
+                self.vx  += 0.2;
+            }
+            self.vx = containNumber(self.vx, topSpeed * -1, topSpeed);
+            self.vy = containNumber(self.vy, topSpeed * -1, topSpeed);
+
+            self.x += self.vx;
+            self.y += self.vy;
+
             gridBounce(self);
         };
 
@@ -131,13 +177,26 @@
             paint.lineTo(0, self.radius * -2 / 3);
             paint.arc(0, 0, self.radius, pi + half_pi + 0.1, pi2 - 0.1, false);
             paint.fill();
+
+            paint.fillStyle = "#FFFF00";
+            // WDSA
+            engines.forEach(function (active) {
+                paint.rotate(half_pi);
+                if (active) {
+                    paint.beginPath();
+                    paint.moveTo(self.radius * 2 / 3, 0);
+                    paint.arc(0, 0, self.radius * 4 / 3, -0.1, 0.1, false);
+                    paint.fill();
+                }
+            });
+
             paint.restore();
         };
 
         return self;
     }
 
-    while (enemies.length < 16) {
+    while (enemies.length < 50) {
         enemies.push(enemy());
     }
 
