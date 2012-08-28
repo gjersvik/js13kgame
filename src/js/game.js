@@ -35,16 +35,6 @@
         shooting = false,
         frame_count = 0;
 
-    function containNumber(number, from, to){
-        if (number < from) {
-            return from;
-        }
-        if (number > to) {
-            return to;
-        }
-        return number;
-    }
-
     function addEvent(target, event, callback) {
         target.addEventListener(event, callback, false);
     }
@@ -56,156 +46,15 @@
         canvas_center_x = canvas_width / 2;
     }
 
-    function gridBounce(sprite) {
-        if (sprite.x < sprite.radius || sprite.x > grid.w - sprite.radius) {
-            sprite.vx /= -2;
-            sprite.x = containNumber(sprite.x, sprite.radius + 1, grid.w - sprite.radius - 1);
-        }
-        if (sprite.y < sprite.radius || sprite.y > grid.h - sprite.radius) {
-            sprite.vy /= -2;
-            sprite.y = containNumber(sprite.y, sprite.radius + 1, grid.h - sprite.radius - 1);
-        }
-    }
-    /* DNA:
-        0: size
-            3: hp
-            4: regen
-            5: armor
-        1: speed
-            6: axsel
-            7: topspeed
-            8: engine responce time
-        2: atack
-            9: homing
-            10: spreed
-            11: bullet speed
-            12: damage
-                13: dps
-                14: firerate
-                15: number of shoots
-        16: engine;
-     */
-
-    function enemy(power_points, dna) {
-        // if enemy have no dna generate a random mutant
-        if (!dna) {
-            dna = [];
-            while (dna.length < 17) {
-                dna.push(Math.random());
-            }
-        }
-
-        var self = {
-                dna: dna,
-                weightedDna: [],
-                powerPoints: power_points,
-                x: grid.w * Math.random(),
-                y: grid.h * Math.random(),
-                vx: 0,
-                vy: 0,
-                angle: 0,
-                radius: 30
-            },
-            acceleration,
-            topSpeed,
-            engineSampleRate,
-            engines = [false, false, false, false];
-
-
-        function weight(array, base) {
-            var sum = array.reduce(function (a, b) {
-                return a + b;
-            });
-            return array.map(function (item) {
-                return item / sum * base;
-            });
-        }
-
-        self.weightedDna = weight(dna.slice(0, 2), 1);
-        self.weightedDna = self.weightedDna.concat(weight(dna.slice(3, 5), self.weightedDna[0]));
-        self.weightedDna = self.weightedDna.concat(weight(dna.slice(6, 8), self.weightedDna[1]));
-        self.weightedDna = self.weightedDna.concat(weight(dna.slice(9, 12), self.weightedDna[3]));
-        self.weightedDna = self.weightedDna.concat(weight(dna.slice(13, 15), self.weightedDna[12]));
-
-        self.radius = 10 + 100 * self.weightedDna[0];
-        acceleration = 0.5 * self.weightedDna[6];
-        topSpeed = 30 * self.weightedDna[7];
-        engineSampleRate = Math.ceil(120 * (1 - self.weightedDna[8]));
-
-        self.hit = function (damage) {
-            self.deleteMe = true;
-        };
-
-        self.advance = function () {
-            if (frame_count % engineSampleRate === 0) {
-                engines = engines.map(function () {
-                    return self.dna[16] / 4 >= Math.random();
-                });
-            }
-
-            if (engines[0]) {
-                self.vy -= 0.2;
-            }
-            // test for S key.
-            if (engines[2]) {
-                self.vy += 0.2;
-            }
-            // test for A key.
-            if (engines[3]) {
-                self.vx -= 0.2;
-            }
-            // test for D key.
-            if (engines[1]) {
-                self.vx  += 0.2;
-            }
-            self.vx = containNumber(self.vx, topSpeed * -1, topSpeed);
-            self.vy = containNumber(self.vy, topSpeed * -1, topSpeed);
-
-            self.x += self.vx;
-            self.y += self.vy;
-
-            gridBounce(self);
-        };
-
-        self.paint = function () {
-            paint.save();
-            paint.translate(self.x, self.y);
-            paint.fillStyle = "#FF0000";
-
-            paint.beginPath();
-            paint.moveTo(self.radius * 2 / 3, 0);
-            paint.arc(0, 0, self.radius, 0.1, half_pi - 0.1, false);
-            paint.lineTo(0, self.radius * 2 / 3);
-            paint.arc(0, 0, self.radius, half_pi + 0.1, pi - 0.1, false);
-            paint.lineTo(self.radius * -2 / 3, 0);
-            paint.arc(0, 0, self.radius, pi + 0.1, pi + half_pi - 0.1, false);
-            paint.lineTo(0, self.radius * -2 / 3);
-            paint.arc(0, 0, self.radius, pi + half_pi + 0.1, pi2 - 0.1, false);
-            paint.fill();
-
-            paint.fillStyle = "#FFFF00";
-            // WDSA
-            engines.forEach(function (active) {
-                paint.rotate(half_pi);
-                if (active) {
-                    paint.beginPath();
-                    paint.moveTo(self.radius * 2 / 3, 0);
-                    paint.arc(0, 0, self.radius * 4 / 3, -0.1, 0.1, false);
-                    paint.fill();
-                }
-            });
-
-            paint.restore();
-        };
-
-        return self;
-    }
-
     (function () {
-        var i = 0;
+        var i = 0,
+            enemy;
         while (i < 50) {
             i += 1;
-            enemies.add(enemy());
+            enemy = game.enemy();
+            enemy.x = grid.w * Math.random(),
+            enemy.y = grid.h * Math.random(),
+            enemies.add(enemy);
         }
     }());
 
@@ -266,7 +115,7 @@
         }
 
         // test if ship is out of bound
-        gridBounce(ship);
+        game.gridBounce(ship);
 
         // Create shoot.
         if (shooting && frame_count % 10 === 0) {
@@ -296,7 +145,7 @@
         player_shoots.forEach(function (shoot) {
             shoot.x += shoot.vx;
             shoot.y += shoot.vy;
-            gridBounce(shoot);
+            game.gridBounce(shoot);
         });
 
         // advance enemies
@@ -352,7 +201,7 @@
 
         // paint enemies
         enemies.forEach(function (enemy) {
-            enemy.paint();
+            enemy.paint(paint);
         });
 
         // painting ship;
