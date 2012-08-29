@@ -6,6 +6,8 @@ module.exports = function (grunt) {
         fs = require('fs'),
         path = require('path');
 
+    grunt.loadNpmTasks('grunt-closure-compiler');
+
     // Project configuration.
     grunt.initConfig({
         meta: {
@@ -30,6 +32,17 @@ module.exports = function (grunt) {
                 dest: 'build/m.js'
             }
         },
+        'closure-compiler': {
+            js: {
+                closurePath: '../tools',
+                js: ['<config:concat.js.dest>'],
+                jsOutputFile: 'build/m.js',
+                options: {
+                    compilation_level: 'ADVANCED_OPTIMIZATIONS',
+                    language_in: 'ECMASCRIPT5_STRICT'
+                }
+            }
+        },
         mincss: {
             src: ['<config:concat.css.dest>'],
             dest: 'build/m.css'
@@ -37,7 +50,7 @@ module.exports = function (grunt) {
         buildHtml: {
             html: '<config:meta.index>',
             css: '<config:mincss.dest>',
-            js: '<config:min.js.dest>',
+            js: '<config:closure-compiler.js.jsOutputFile>',
             dest: 'build/index.html'
         },
         zip: {
@@ -150,6 +163,6 @@ module.exports = function (grunt) {
     });
 
     // Default task.
-    grunt.registerTask('default', 'debugHtml concat min mincss buildHtml zip');
+    grunt.registerTask('default', 'debugHtml concat closure-compiler mincss buildHtml zip');
 
 };
