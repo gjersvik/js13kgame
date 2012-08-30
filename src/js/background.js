@@ -87,7 +87,7 @@ game.background = function (canvas) {
         }
         // normalise the result
         fractalNoise /= maxSum;
-        return 1.3 * fractalNoise - 0.3;
+        return fractalNoise;
     }
 
     self.paint = function (frame_count) {
@@ -113,9 +113,9 @@ game.background = function (canvas) {
             while (x < canvas_width) {
                 noise = getFractalNoise(x / 100, y / 100, time);
                 index = y * canvas_width * 4 + x * 4;
-                pixels[index] = 255 * Math.max(noise - 0.5, 0);
+                pixels[index] = 200 * Math.max(noise - 0.5, 0);
                 pixels[index + 1] = 0;
-                pixels[index + 2] = 64 - Math.abs(128 * noise - 64);
+                pixels[index + 2] = 32 - Math.abs(64 * noise - 32);
                 pixels[index + 3] = 255;
                 x += skip;
             }
