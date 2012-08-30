@@ -3,8 +3,23 @@ html,body{
     margin: 0;
 }
 
-canvas{
-    display: block;
+.show, #bg{
+    display: block ! important;
+}
+
+.screen,#bg{
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+}
+
+#bg{
+    height: 100%;
+}
+
+#game{
     cursor: crosshair;
-    background-color: #000000;
 }

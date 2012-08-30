@@ -12,7 +12,7 @@ module.exports = function (grunt) {
     grunt.initConfig({
         meta: {
             version: '0.1.0',
-            js: ['src/js/namespace.js', 'src/js/spritelist.js', 'src/js/enemy.js', 'src/js/game.js'],
+            js: ['src/js/namespace.js', 'src/js/*.js'],
             css: ['src/css/*.css'],
             index: 'src/index.html'
         },
@@ -39,7 +39,9 @@ module.exports = function (grunt) {
                 jsOutputFile: 'build/m.js',
                 options: {
                     compilation_level: 'ADVANCED_OPTIMIZATIONS',
-                    language_in: 'ECMASCRIPT5_STRICT'
+                    language_in: 'ECMASCRIPT5_STRICT',
+                    use_types_for_optimization: '',
+                    third_party: ''
                 }
             }
         },

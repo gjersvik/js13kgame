@@ -249,4 +249,4 @@
     }
     animation(loop);
 
-}(window, document, game));
+});
