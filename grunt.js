@@ -12,7 +12,7 @@ module.exports = function (grunt) {
     grunt.initConfig({
         meta: {
             version: '0.1.0',
-            js: ['src/js/app.js', 'src/js/background.js'],
+            js: ['src/js/app.js', 'src/js/texture.js', 'src/js/background.js'],
             css: ['src/css/*.css'],
             index: 'src/index.html'
         },

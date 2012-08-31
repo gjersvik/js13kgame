@@ -1,5 +1,15 @@
 /*global game */
 
+/*
+image_size
+    height: 1024
+    width: 1024
+random_base:
+    grid_height:256
+    grid_with:256
+
+ */
+
 game.background = function (canvas) {
     'use strict';
     var self = {},
@@ -91,6 +101,7 @@ game.background = function (canvas) {
     }
 
     self.paint = function (frame_count) {
+        return;
         var image = paint.getImageData(0, 0, canvas_width, canvas_height),
             pixels = image.data,
             x = 0,
