@@ -216,7 +216,7 @@
                 i += 1;
             }
 
-            value = (value - keys[i]) / keys[i + 1] - keys[i];
+            value = (value - keys[i]) / (keys[i + 1] - keys[i]);
             a = colors[keys[i]];
             b = colors[keys[i + 1]];
 

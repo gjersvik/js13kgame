@@ -48,5 +48,13 @@ game.app = function (window, document) {
 window.onload = function () {
     'use strict';
     document.getElementById('test').src = game.textureBuilder({
+        mix: {
+            name: 'sine'
+        },
+        color: {
+            "0": "000000FF",
+            "50": "000020FF",
+            "100": "640000FF"
+        }
     });
 };
