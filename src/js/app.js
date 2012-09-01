@@ -48,13 +48,5 @@ game.app = function (window, document) {
 window.onload = function () {
     'use strict';
     document.getElementById('test').src = game.textureBuilder({
-        mix: {name: 'linear'},
-        xGain: 1 / 100,
-        yGain: 1 / 100,
-        layers: 7,
-        transform: {name: 'bounce'},
-        hue: [51, 59, 62],
-        saturation: [0.95, 0.32, 0.24],
-        value: [0.23, 0.58, 0.82]
     });
 };

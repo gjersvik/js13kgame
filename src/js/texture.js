@@ -21,10 +21,10 @@
     },
     xGain: 1/100,
     yGain: 1/100,
-    hue: [0],
-    saturation: [0],
-    value: [0 , 1],
-    alfa: [1]
+    colors:{
+        0:"000000FF",
+        100:"FFFFFFFF"
+    }
 };*/
 
 (function (document, game) {
@@ -166,43 +166,6 @@
         };
     }
 
-    function hsvToRgb(h, s, v) {
-        var hi = Math.floor((h / 60) % 6),
-            f = (h / 60) - hi,
-            p = v * (1 - s),
-            q = v * (1 - f * s),
-            t = v * (1 - (1 - f) * s),
-            rgb = [];
-
-        switch (hi) {
-        case 0:
-            rgb = [v, t, p];
-            break;
-        case 1:
-            rgb = [q, v, p];
-            break;
-        case 2:
-            rgb = [p, v, t];
-            break;
-        case 3:
-            rgb = [p, q, v];
-            break;
-        case 4:
-            rgb = [t, p, v];
-            break;
-        case 5:
-            rgb = [v, p, q];
-            break;
-        }
-
-        rgb[0] = Math.min(255, Math.round(rgb[0] * 256));
-        rgb[1] = Math.min(255, Math.round(rgb[1] * 256));
-        rgb[2] = Math.min(255, Math.round(rgb[2] * 256));
-
-        return rgb;
-
-    }
-
     function angleMix(a, b, weight) {
         var out = 0;
         if (Math.abs(a - b) <= 180) {
@@ -221,24 +184,46 @@
         return out;
     }
 
-    function gradient(value, array, hue) {
-        var step = 1 / (array.length - 1),
-            pos = Math.floor(value / step),
-            out;
-        value = value / step - pos;
+    function gradientFunc(options) {
+        var colors = options.color || {0: "000000FF", 100: "FFFFFFFF"},
+            keys = Object.getOwnPropertyNames(colors),
+            length = keys.length;
 
-        if (array.length === 1) {
-            return array[0];
-        }
+        keys.forEach(function (key) {
+            var color = colors[key],
+                array = [];
 
-        if (value === 0) {
-            return array[pos];
-        }
+            array[0] = parseInt(color.substring(0, 2), 16);
+            array[1] = parseInt(color.substring(2, 4), 16);
+            array[2] = parseInt(color.substring(4, 6), 16);
+            array[3] = parseInt(color.substring(6, 8), 16);
 
-        if (hue) {
-            return angleMix(array[pos], array[pos + 1], value);
-        }
-        return mix(array[pos], array[pos + 1], value);
+            colors[key] = array;
+        });
+
+        keys = keys.map(parseFloat);
+        keys.sort(function (a, b) {
+            return a - b;
+        });
+
+        return function (value) {
+            value *= 100;
+            var i = 0,
+                a,
+                b;
+
+            while (i < length - 1 && keys[i + 1] <= value) {
+                i += 1;
+            }
+
+            value = (value - keys[i]) / keys[i + 1] - keys[i];
+            a = colors[keys[i]];
+            b = colors[keys[i + 1]];
+
+            return a.map(function (item, index) {
+                return mix(item, b[index], value);
+            });
+        };
     }
 
     game.textureBuilder = function (options) {
@@ -248,10 +233,7 @@
             width = options.width || height,
             xGain = options.xGain || 1 / 100,
             yGain = options.yGain || xGain,
-            hue = options.hue || [0],
-            saturation = options.saturation || [0],
-            value = options.value || [0, 1],
-            alfa = options.alfa || [1],
+            gradient = gradientFunc(options),
             grid = makeRandomGrid(options),
             mix = transformFunction(options.mix),
             transform = transformFunction(options.transform),
@@ -264,22 +246,18 @@
             y = 0,
             index = 0,
             noise_value = 0,
-            rgb;
+            rgba;
 
         while (y < height) {
             x = 0;
             while (x < width) {
                 index = y * width * 4 + x * 4;
                 noise_value = transform(fractal(x * xGain, y * yGain));
-                rgb = hsvToRgb(
-                    gradient(noise_value, hue, true),
-                    gradient(noise_value, saturation),
-                    gradient(noise_value, value)
-                );
-                pixels[index] = rgb[0];
-                pixels[index + 1] = rgb[1];
-                pixels[index + 2] = rgb[2];
-                pixels[index + 3] = 255 * gradient(noise_value, alfa);
+                rgba = gradient(noise_value);
+                pixels[index] = rgba[0];
+                pixels[index + 1] = rgba[1];
+                pixels[index + 2] = rgba[2];
+                pixels[index + 3] = rgba[3];
                 x += 1;
             }
             y += 1;
