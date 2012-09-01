@@ -27,42 +27,44 @@
     }
 };*/
 
-(function (document, game) {
+game.texture = (function (document) {
     'use strict';
     var transformations = {
-        'linear': function (p) {
-            return p;
-        },
-        'custom': function (p, callback){
-            return callback(p);
-        },
-        'pow': function (p, x) {
-            return Math.pow(p, x);
-        },
-        'expo': function (p) {
-            return Math.pow(2, 8 * (p - 1));
-        },
-        'circ': function (p) {
-            return 1 - Math.sin(Math.acos(p));
-        },
-        'sine': function (p) {
-            return 1 - Math.cos(p * Math.PI / 2);
-        },
-        'bounce': function (v) {
-            var value,
-                a = 0,
-                b = 1;
-            while (true) {
-                if (v >= (7 - 4 * a) / 11) {
-                    value = b * b - Math.pow((11 - 6 * a - 11 * v) / 4, 2);
-                    break;
+            'linear': function (p) {
+                return p;
+            },
+            'custom': function (p, callback){
+                return callback(p);
+            },
+            'pow': function (p, x) {
+                return Math.pow(p, x);
+            },
+            'expo': function (p) {
+                return Math.pow(2, 8 * (p - 1));
+            },
+            'circ': function (p) {
+                return 1 - Math.sin(Math.acos(p));
+            },
+            'sine': function (p) {
+                return 1 - Math.cos(p * Math.PI / 2);
+            },
+            'bounce': function (v) {
+                var value,
+                    a = 0,
+                    b = 1;
+                while (true) {
+                    if (v >= (7 - 4 * a) / 11) {
+                        value = b * b - Math.pow((11 - 6 * a - 11 * v) / 4, 2);
+                        break;
+                    }
+                    a += b;
+                    b /= 2;
                 }
-                a += b;
-                b /= 2;
+                return value;
             }
-            return value;
-        }
-    }
+        },
+        textures = {},
+        canvas = document.createElement('canvas');
 
     function transformFunction(options) {
         options = options || {};
@@ -226,47 +228,52 @@
         };
     }
 
-    game.textureBuilder = function (options) {
-        options = options || {};
-        var canvas = document.createElement('canvas'),
-            height = options.height || 1024,
-            width = options.width || height,
-            xGain = options.xGain || 1 / 100,
-            yGain = options.yGain || xGain,
-            gradient = gradientFunc(options),
-            grid = makeRandomGrid(options),
-            mix = transformFunction(options.mix),
-            transform = transformFunction(options.transform),
-            noiseFunc = noise(grid, mix),
-            fractal = fractalNoise(noiseFunc, options),
-            paint = canvas.getContext('2d'),
-            image = paint.createImageData(width, height),
-            pixels = image.data,
-            x = 0,
-            y = 0,
-            index = 0,
-            noise_value = 0,
-            rgba;
+    return {
+        create: function (name, options){
+            options = options || {};
+            var height = options.height || 1024,
+                width = options.width || height,
+                xGain = options.xGain || 1 / 100,
+                yGain = options.yGain || xGain,
+                gradient = gradientFunc(options),
+                grid = makeRandomGrid(options),
+                mix = transformFunction(options.mix),
+                transform = transformFunction(options.transform),
+                noiseFunc = noise(grid, mix),
+                fractal = fractalNoise(noiseFunc, options),
+                image = canvas.getContext('2d').createImageData(width, height),
+                pixels = image.data,
+                x = 0,
+                y = 0,
+                index = 0,
+                noise_value = 0,
+                rgba;
 
-        while (y < height) {
-            x = 0;
-            while (x < width) {
-                index = y * width * 4 + x * 4;
-                noise_value = transform(fractal(x * xGain, y * yGain));
-                rgba = gradient(noise_value);
-                pixels[index] = rgba[0];
-                pixels[index + 1] = rgba[1];
-                pixels[index + 2] = rgba[2];
-                pixels[index + 3] = rgba[3];
-                x += 1;
+            while (y < height) {
+                x = 0;
+                while (x < width) {
+                    index = y * width * 4 + x * 4;
+                    noise_value = transform(fractal(x * xGain, y * yGain));
+                    rgba = gradient(noise_value);
+                    pixels[index] = rgba[0];
+                    pixels[index + 1] = rgba[1];
+                    pixels[index + 2] = rgba[2];
+                    pixels[index + 3] = rgba[3];
+                    x += 1;
+                }
+                y += 1;
             }
-            y += 1;
+            textures[name] = image;
+        },
+        getData: function (name) {
+            return textures[name];
+        },
+        getUrl: function (name) {
+            var image = textures[name];
+            canvas.width = image.width;
+            canvas.height = image.height;
+            canvas.getContext('2d').putImageData(image, 0, 0);
+            return canvas.toDataURL();
         }
-
-        canvas.height = height;
-        canvas.width = width;
-        paint.putImageData(image, 0, 0);
-
-        return canvas.toDataURL();
     };
-}(document, game));
+}(document));
