@@ -1,61 +1,43 @@
 /*jslint browser:true */
-/**
- * @const
- */
-var game = {};
+/*global game */
 
-/**
- * @const
- * @type {Number}
- */
-game.GRID_H = 3000;
-/**
- * @const
- * @type {Number}
- */
-game.GRID_W = 3000;
-
-game.addEvent = function (target, event, callback) {
+game.app = function () {
     'use strict';
-    target.addEventListener(event, callback, false);
-};
+    var self = {},
+        currentState = null,
+        states = {};
 
-game.app = function (window, document) {
-    'use strict';
-    var animation = window.requestAnimationFrame,
-        frame_count = 0,
-        bg = game.background(document.getElementById('bg'));
-    ['ms', 'moz', 'webkit', 'o'].forEach(function (vendor) {
-        animation = animation || window[vendor + 'RequestAnimationFrame'];
-    });
+    self.start = function () {
+        var menu = game.menu();
+        states = {
+            'load': game.loader(),
+            'menu': menu,
+            'pause': menu,
+            'play': null,
+            'build': null,
+            'over': null,
+            'win': null
+        };
+        self.changeState('load');
+    };
 
-    function resize() {
-        var width = document.body.clientWidth,
-            height = document.body.clientHeight;
-        bg.resize(width, height);
-    }
-    game.addEvent(window, 'resize', resize);
-    resize();
+    self.changeState = function (to) {
+        var state = states[to],
+            data = null;
+        if (state.accept(currentState, to)) {
+            if (currentState) {
+                data = states[currentState].leave(to);
+            }
+            state.enter(currentState, self.changeState, data);
+            currentState = to;
+        }
+    };
 
-    function paint() {
-        frame_count += 1;
-        bg.paint(frame_count);
-        animation(paint);
-    }
-    animation(paint);
+    return self;
 };
 
 window.onload = function () {
     'use strict';
-    game.texture.create('test', {
-        mix: {
-            name: 'sine'
-        },
-        color: {
-            "0": "000000FF",
-            "50": "000020FF",
-            "100": "640000FF"
-        }
-    });
-    document.getElementById('test').src = game.texture.getUrl('test');
+    var app = game.app();
+    app.start();
 };

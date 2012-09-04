@@ -69,6 +69,28 @@ game.gridBounce = function (sprite) {
         target.addEventListener(event, callback, false);
     }
 
+    var animation = window.requestAnimationFrame,
+        frame_count = 0,
+        bg = game.background(document.getElementById('bg'));
+    ['ms', 'moz', 'webkit', 'o'].forEach(function (vendor) {
+        animation = animation || window[vendor + 'RequestAnimationFrame'];
+    });
+
+    function resize() {
+        var width = document.body.clientWidth,
+            height = document.body.clientHeight;
+        bg.resize(width, height);
+    }
+    game.addEvent(window, 'resize', resize);
+    resize();
+
+    function paint() {
+        frame_count += 1;
+        bg.paint(frame_count);
+        animation(paint);
+    }
+    animation(paint);
+
     function resizeCanvas() {
         canvas_height = canvas.height = body.clientHeight;
         canvas_width = canvas.width = body.clientWidth;
