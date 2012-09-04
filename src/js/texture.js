@@ -188,6 +188,7 @@ game.texture = (function (document) {
 
     function gradientFunc(options) {
         var colors = options.color || {0: "000000FF", 100: "FFFFFFFF"},
+            rpga = {},
             keys = Object.getOwnPropertyNames(colors),
             length = keys.length;
 
@@ -200,7 +201,7 @@ game.texture = (function (document) {
             array[2] = parseInt(color.substring(4, 6), 16);
             array[3] = parseInt(color.substring(6, 8), 16);
 
-            colors[key] = array;
+            rpga[key] = array;
         });
 
         keys = keys.map(parseFloat);
@@ -219,8 +220,8 @@ game.texture = (function (document) {
             }
 
             value = (value - keys[i]) / (keys[i + 1] - keys[i]);
-            a = colors[keys[i]];
-            b = colors[keys[i + 1]];
+            a = rpga[keys[i]];
+            b = rpga[keys[i + 1]];
 
             return a.map(function (item, index) {
                 return mix(item, b[index], value);
