@@ -1,33 +1,90 @@
 /*jslint browser:true */
 /*global game */
 
-/**
- * @param {number} number
- * @param {number} from
- * @param {number} to
- * @return {number}
- */
-game.containNumber = function (number, from, to) {
+game.game = function () {
     'use strict';
-    if (number < from) {
-        return from;
-    }
-    if (number > to) {
-        return to;
-    }
-    return number;
-};
+    var canvas = game.createContainer(null, 'canvas'),
+        paint = canvas.getContext('2d'),
+        setState,
+        running = false;
 
-game.gridBounce = function (sprite) {
-    'use strict';
-    if (sprite.x < sprite.radius || sprite.x > game.GRID_W - sprite.radius) {
-        sprite.vx /= -2;
-        sprite.x = game.containNumber(sprite.x, sprite.radius + 1, game.GRID_W - 1 - sprite.radius);
+    function newGame() {
+
     }
-    if (sprite.y < sprite.radius || sprite.y > game.GRID_H - sprite.radius) {
-        sprite.vy /= -2;
-        sprite.y = game.containNumber(sprite.y, sprite.radius + 1, game.GRID_H - 1 - sprite.radius);
+
+    function nextLevel() {
+
     }
+
+    function paintBG() {
+        // painting background;
+        var i = 0;
+
+        paint.strokeStyle = "#666666";
+        paint.lineWidth = 2;
+        paint.beginPath();
+
+        while (i < 5) {
+            i += 1;
+            paint.moveTo(i * 500, 0);
+            paint.lineTo(i * 500, 3000);
+        }
+        i = 0;
+        while (i < 5) {
+            i += 1;
+            paint.moveTo(0, i * 500);
+            paint.lineTo(3000, i * 500);
+        }
+        paint.stroke();
+
+        paint.lineWidth = 10;
+        paint.strokeStyle = "#FF0000";
+        paint.strokeRect(0, 0, 3000, 3000);
+    }
+
+    function loop() {
+        if (!running) {
+            return;
+        }
+
+        //advance
+
+        //paint
+        paint.clearRect(0, 0, canvas.width, canvas.height);
+        paint.save();
+        paintBG();
+
+        paint.restore();
+        game.animateTimer(loop);
+    }
+
+    return {
+        accept: function (from, to) {
+            if (from === 'build' || from === 'pause' || from === 'menu') {
+                return true;
+            }
+            return false;
+        },
+        enter: function (from, setStateFunc, data) {
+            setState = setStateFunc;
+            if (from === 'menu') {
+                newGame();
+            }
+            if (from === 'build') {
+                nextLevel();
+            }
+            running = true;
+            game.animateTimer(loop);
+
+            canvas.width = document.body.clientWidth;
+            canvas.height = document.body.clientHeight;
+            document.body.appendChild(canvas);
+        },
+        leave: function (to) {
+            running = false;
+            document.body.removeChild(canvas);
+        }
+    };
 };
 
 (function (window, document, game) {
@@ -65,16 +122,6 @@ game.gridBounce = function (sprite) {
         shooting = false,
         frame_count = 0;
 
-    function addEvent(target, event, callback) {
-        target.addEventListener(event, callback, false);
-    }
-
-    var animation = window.requestAnimationFrame,
-        frame_count = 0,
-        bg = game.background(document.getElementById('bg'));
-    ['ms', 'moz', 'webkit', 'o'].forEach(function (vendor) {
-        animation = animation || window[vendor + 'RequestAnimationFrame'];
-    });
 
     function resize() {
         var width = document.body.clientWidth,

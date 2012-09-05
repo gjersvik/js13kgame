@@ -13,7 +13,7 @@ game.app = function () {
             'load': game.loader(),
             'menu': menu,
             'pause': menu,
-            'play': null,
+            'play': game.game(),
             'build': null,
             'over': null,
             'win': null
